@@ -1,0 +1,31 @@
+<?php
+require __DIR__.'/config.php';
+session_start();
+if (isset($_GET['logout'])) { session_destroy(); header('Location: admin.php'); exit; }
+if (isset($_POST['pwd'])) {
+  if (hash_equals(ADMIN_PASSWORD, $_POST['pwd'])) { $_SESSION['ok']=1; header('Location: admin.php'); exit; }
+  $err = 'Mot de passe incorrect.';
+}
+if (empty($_SESSION['ok'])): ?><!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Connexion</title></head>
+<body style="font-family:Arial;background:#fff;max-width:340px;margin:80px auto;padding:0 16px">
+<h2>Espace MatDiagnostics</h2>
+<?php if(!empty($err)) echo '<p style="color:#b00">'.h($err).'</p>'; ?>
+<form method="post"><input type="password" name="pwd" placeholder="Mot de passe" style="width:100%;padding:10px" autofocus>
+<button style="margin-top:10px;padding:10px 16px">Entrer</button></form></body></html>
+<?php exit; endif;
+$rows = db()->query('SELECT * FROM clients ORDER BY id DESC')->fetchAll(PDO::FETCH_ASSOC);
+$total = count($rows);
+?><!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Clients inscrits</title>
+<style>body{font-family:Arial,sans-serif;background:#fff;color:#111;margin:0;padding:20px}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.c{border-bottom:1px solid #ddd;padding:12px 0;line-height:1.5}
+.n{font-weight:bold;color:#0b3d91}.d{color:#666;font-size:.9rem}</style></head><body>
+<div class="top"><h2>Clients inscrits (<?=$total?>)</h2><span><a href="">Actualiser</a> · <a href="?logout=1">Déconnexion</a></span></div>
+<?php if(!$rows) echo '<p>Aucun client pour le moment.</p>';
+foreach($rows as $i=>$r): ?>
+<div class="c"><span class="n"><?=$total-$i?></span>
+[<?=h($r['nom'])?> — <?=h($r['adresse'])?> — <?=h($r['telephone'])?> — <?=h($r['service'])?> (<?=number_format($r['prix'],0,',',' ')?> FCFA)]
+<div class="d">Inscrit le <?=h(date('d/m/Y à H:i',strtotime($r['created_at'])))?></div></div>
+<?php endforeach;?></body></html>

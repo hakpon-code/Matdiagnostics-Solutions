@@ -1,0 +1,85 @@
+<?php
+require __DIR__.'/config.php';
+$msg = ''; $err = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST['website'])) {
+  $nom = trim($_POST['nom'] ?? ''); $tel = trim($_POST['tel'] ?? '');
+  $adr = trim($_POST['adresse'] ?? ''); $svc = $_POST['service'] ?? '';
+  if ($nom === '' || $tel === '' || $adr === '' || !isset(SERVICES[$svc])) {
+    $err = 'Veuillez remplir tous les champs et choisir un service.';
+  } else {
+    try {
+      db()->prepare('INSERT INTO clients(nom,telephone,adresse,service,prix,created_at) VALUES(?,?,?,?,?,?)')
+        ->execute([mb_substr($nom,0,150), mb_substr($tel,0,30), mb_substr($adr,0,250), SERVICES[$svc][0], SERVICES[$svc][1], date('Y-m-d H:i:s')]);
+      $msg = 'Merci ! Votre demande a bien été enregistrée. Nous vous contacterons très vite.';
+    } catch (Throwable $e) { $err = 'Erreur technique, réessayez plus tard.'; }
+  }
+}
+$groups = []; foreach (SERVICES as $k=>$s) $groups[$s[2]][$k] = $s;
+$fmt = fn($n)=>number_format($n,0,',',' ').' FCFA';
+?><!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MatDiagnostics Solution — Windows &amp; Office</title>
+<style>
+*{box-sizing:border-box}body{font-family:system-ui,Arial,sans-serif;margin:0;background:#f3f6fb;color:#1b2a41;padding-bottom:84px}
+.hero{background:linear-gradient(135deg,#0b2a6b,#1e6bff);color:#fff;padding:36px 16px}
+.hero .in{max-width:980px;margin:auto;display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.hero .t{flex:1 1 320px}.hero h1{margin:0 0 10px;font-size:2rem}.hero p{margin:0 0 18px;opacity:.9;line-height:1.5}
+.hero img{flex:1 1 300px;max-width:440px;width:100%;border-radius:20px}
+.btn{display:inline-block;background:#fff;color:#0b3d91;padding:12px 22px;border-radius:30px;font-weight:700;text-decoration:none}
+section{max-width:980px;margin:34px auto;padding:0 16px}h2{text-align:center;color:#0b3d91}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.card{background:#fff;border-radius:14px;padding:18px;text-align:center;box-shadow:0 2px 10px #0001}
+.card img{width:64px;height:64px}.card h3{margin:10px 0 6px;font-size:1.05rem}.card p{margin:0;color:#52607a;font-size:.93rem}
+.pack{border-top:4px solid #1e6bff;text-align:left}.pack .p{font-size:1.25rem;font-weight:800;color:#0b3d91;margin-top:10px}
+.pack.top{border-color:#f59e0b}
+form{background:#fff;padding:22px;border-radius:14px;box-shadow:0 2px 10px #0001;max-width:540px;margin:auto}
+label{display:block;margin:14px 0 6px;font-weight:600}
+input,select,textarea{width:100%;padding:12px;border:1px solid #c5cfdf;border-radius:8px;font-size:1rem;font-family:inherit}
+button{margin-top:18px;width:100%;padding:14px;background:#0b3d91;color:#fff;border:0;border-radius:8px;font-size:1.05rem;cursor:pointer}
+.ok{background:#e3f6e8;color:#14692b;padding:12px;border-radius:8px;margin-bottom:14px}
+.ko{background:#fde8e8;color:#9b1c1c;padding:12px;border-radius:8px;margin-bottom:14px}
+.hp{position:absolute;left:-9999px}
+#bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:3px solid #0b3d91;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;font-size:1.05rem;z-index:9}
+#bar strong{font-size:1.4rem;color:#0b3d91}footer{text-align:center;color:#6b7a94;font-size:.85rem;padding:10px}
+</style></head><body>
+<div class="hero"><div class="in"><div class="t">
+<h1>MatDiagnostics Solution</h1>
+<p>Installation et activation de Windows 10/11 et Office, nettoyage, sécurité et optimisation de votre ordinateur. Rapide, fiable, au meilleur prix.</p>
+<a class="btn" href="#demande">Faire une demande</a></div>
+<img src="img/hero.svg" alt="Ordinateur réparé et sécurisé"></div></div>
+
+<section><h2>Pourquoi nous choisir ?</h2><div class="grid">
+<div class="card"><img src="img/install.svg" alt=""><h3>Installation propre</h3><p>Windows et Office installés correctement, avec tous vos pilotes.</p></div>
+<div class="card"><img src="img/activate.svg" alt=""><h3>Activation rapide</h3><p>Votre système activé et prêt à l'emploi en peu de temps.</p></div>
+<div class="card"><img src="img/shield.svg" alt=""><h3>PC protégé</h3><p>Antivirus, nettoyage et diagnostic pour un ordinateur sain.</p></div>
+<div class="card"><img src="img/data.svg" alt=""><h3>Données en sécurité</h3><p>Sauvegarde et récupération de vos fichiers importants.</p></div>
+</div></section>
+
+<section><h2>Nos packs</h2><div class="grid">
+<?php foreach($groups['Packs'] as $k=>$s): ?>
+<div class="card pack<?= $k==='pack_premium'?' top':'' ?>"><h3><?=h($s[0])?></h3><div class="p"><?=$fmt($s[1])?></div></div>
+<?php endforeach;?></div></section>
+
+<section id="demande"><h2>Votre demande</h2>
+<form method="post" autocomplete="off">
+<?php if($msg):?><div class="ok"><?=h($msg)?></div><?php endif;?>
+<?php if($err):?><div class="ko"><?=h($err)?></div><?php endif;?>
+  <label>Nom et prénoms</label><input name="nom" required>
+  <label>Numéro de téléphone</label><input name="tel" type="tel" required>
+  <label>Adresse actuelle</label><textarea name="adresse" rows="2" required></textarea>
+  <label>Service souhaité</label>
+  <select name="service" id="service" required>
+    <option value="" data-prix="0">— Choisissez un service —</option>
+    <?php foreach($groups as $g=>$list): ?><optgroup label="<?=h($g)?>">
+      <?php foreach($list as $k=>$s): ?><option value="<?=h($k)?>" data-prix="<?=$s[1]?>"><?=h($s[0])?></option><?php endforeach;?>
+    </optgroup><?php endforeach;?>
+  </select>
+  <input class="hp" name="website" tabindex="-1" autocomplete="off">
+  <button type="submit">Envoyer ma demande</button>
+</form></section>
+<footer>© <?=date('Y')?> MatDiagnostics Solution</footer>
+<div id="bar"><span>Prix à payer :</span><strong id="prix">0 FCFA</strong></div>
+<script>
+const sel=document.getElementById('service'),out=document.getElementById('prix');
+sel.addEventListener('change',()=>{out.textContent=((+sel.selectedOptions[0].dataset.prix)||0).toLocaleString('fr-FR')+' FCFA'});
+</script></body></html>

@@ -1,0 +1,33 @@
+<?php
+date_default_timezone_set('Africa/Porto-Novo');
+// >>> MODIFIEZ ICI : mot de passe admin et services/prix (en FCFA)
+const ADMIN_PASSWORD = 'ChangeMoi-2026!';
+// Dossier des données : HORS du site (à côté de public_html)
+define('DATA_DIR', dirname(__DIR__) . '/matdiagnostics_data');
+// 'clé' => [nom du service, prix, groupe]
+const SERVICES = [
+  'win_install'    => ['Installation Windows 10 / 11', 5000, 'Services à l\'unité'],
+  'win_activate'   => ['Activation Windows 10 / 11', 3000, 'Services à l\'unité'],
+  'office_install' => ['Installation Office', 4000, 'Services à l\'unité'],
+  'office_activate'=> ['Activation Office', 3000, 'Services à l\'unité'],
+  'drivers'        => ['Installation des pilotes (drivers)', 2500, 'Services à l\'unité'],
+  'antivirus'      => ['Installation antivirus + configuration', 2500, 'Services à l\'unité'],
+  'virus'          => ['Nettoyage virus / logiciels malveillants', 5000, 'Services à l\'unité'],
+  'diagnostic'     => ['Diagnostic complet du PC', 2000, 'Services à l\'unité'],
+  'speed'          => ['Optimisation / accélération du PC', 4000, 'Services à l\'unité'],
+  'backup'         => ['Sauvegarde et récupération de données', 6000, 'Services à l\'unité'],
+  'pack_windows'   => ['Pack Windows (installation + activation)', 7000, 'Packs'],
+  'pack_office'    => ['Pack Office (installation + activation)', 6000, 'Packs'],
+  'pack_complet'   => ['Pack Complet (Windows + Office)', 12000, 'Packs'],
+  'pack_securite'  => ['Pack Sécurité (nettoyage + antivirus + diagnostic)', 8000, 'Packs'],
+  'pack_premium'   => ['Pack Premium (Complet + pilotes + antivirus + optimisation)', 18000, 'Packs'],
+];
+function db(): PDO {
+  if (!is_dir(DATA_DIR)) { @mkdir(DATA_DIR, 0750, true); }
+  $pdo = new PDO('sqlite:' . DATA_DIR . '/clients.sqlite');
+  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  $pdo->exec('CREATE TABLE IF NOT EXISTS clients(id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nom TEXT, telephone TEXT, adresse TEXT, service TEXT, prix INTEGER, created_at TEXT)');
+  return $pdo;
+}
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
